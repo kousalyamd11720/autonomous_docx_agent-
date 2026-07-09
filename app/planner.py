@@ -16,6 +16,7 @@ Flow:
 """
 import json
 import logging
+from datetime import datetime
 from typing import List
 
 from app.models import ExecutionPlan, PlanStep
@@ -23,7 +24,11 @@ from app.llm_client import call_llm, LLMUnavailableError
 
 logger = logging.getLogger("agent.planner")
 
-PLANNER_SYSTEM_PROMPT = """You are the planning module of an autonomous AI agent.
+PLANNER_SYSTEM_PROMPT_TEMPLATE = """You are the planning module of an autonomous AI agent.
+Today's real-world date is {today}. If the request or your plan implies any
+dates (launch dates, milestones, deadlines), they must be realistic future
+dates relative to {today} -- never reuse a date from your training data.
+
 Given a user's natural language request, you decide:
 1. What TYPE of business document best satisfies the request (e.g. Business
    Proposal, Meeting Minutes, Project Plan, Technical Design Doc, SOP,
@@ -33,20 +38,30 @@ Given a user's natural language request, you decide:
    list the reasonable assumptions you are making to proceed anyway.
 4. A step-by-step execution plan (3 to 7 steps) where EACH step corresponds
    to ONE section of the final document. Order the steps the way the
-   sections should appear in the document.
+   sections should appear in the document. If the document type calls for
+   budget or timeline information, include a dedicated step for it (e.g.
+   "Timeline & Budget") so it can be rendered as a table.
+
+Each step must cover a DISTINCT angle of the request -- do not create two
+steps that would end up saying the same thing in different words.
 
 Respond with ONLY valid JSON, no markdown fences, no commentary, in exactly
 this schema:
-{
+{{
   "document_type": "string",
   "document_title": "string",
   "assumptions": ["string", ...],
   "steps": [
-    {"step_id": 1, "title": "short step name", "description": "what this step must accomplish", "section_heading": "heading text for this section in the doc"},
+    {{"step_id": 1, "title": "short step name", "description": "what this step must accomplish", "section_heading": "heading text for this section in the doc"}},
     ...
   ]
-}
+}}
 """
+
+
+def _planner_system_prompt() -> str:
+    today = datetime.now().strftime("%B %d, %Y")
+    return PLANNER_SYSTEM_PROMPT_TEMPLATE.format(today=today)
 
 
 def _fallback_plan(user_request: str) -> ExecutionPlan:
@@ -86,7 +101,7 @@ def generate_plan(user_request: str) -> ExecutionPlan:
     try:
         raw = call_llm(
             prompt=f"User request:\n{user_request}",
-            system_prompt=PLANNER_SYSTEM_PROMPT,
+            system_prompt=_planner_system_prompt(),
             json_mode=True,
         )
         data = json.loads(raw)
