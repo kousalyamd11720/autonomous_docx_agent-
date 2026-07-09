@@ -105,8 +105,8 @@ function markStepDone(result) {
     .map((l) => l.trim())
     .filter(Boolean)
     .map((line) => {
-      if (/^[-*•]\s+/.test(line)) {
-        return `<li>${escapeHtml(line.replace(/^[-*•]\s+/, ""))}</li>`;
+      if (/^[-*\u2022]\s+/.test(line)) {
+        return `<li>${escapeHtml(line.replace(/^[-*\u2022]\s+/, ""))}</li>`;
       }
       return `<p>${escapeHtml(line)}</p>`;
     })
@@ -131,7 +131,7 @@ async function runAgent() {
 
   resetPanels();
   runBtn.disabled = true;
-  setFooter("running", "Planning · agent is deciding the document structure…");
+  setFooter("running", "Planning - agent is deciding the document structure...");
 
   try {
     const resp = await fetch("/agent/stream", {
@@ -166,7 +166,7 @@ async function runAgent() {
   } catch (err) {
     errorBox.textContent = `Agent pipeline error: ${err.message}`;
     errorBox.classList.remove("hidden");
-    setFooter("error", "Failed · see error above");
+    setFooter("error", "Failed - see error above");
   } finally {
     runBtn.disabled = false;
   }
@@ -176,11 +176,11 @@ function handleEvent(payload) {
   switch (payload.type) {
     case "plan":
       renderPlan(payload.plan);
-      setFooter("running", `Executing · 0 / ${payload.plan.steps.length} sections written`);
+      setFooter("running", `Executing - 0 / ${payload.plan.steps.length} sections written`);
       break;
     case "step_start":
       markStepRunning(payload.step_id);
-      setFooter("running", `Executing · writing "${payload.title}"…`);
+      setFooter("running", `Executing - writing "${payload.title}"...`);
       break;
     case "step_done":
       markStepDone(payload);
@@ -193,12 +193,12 @@ function handleEvent(payload) {
           "Note: one or more sections used fallback content because the LLM was unavailable during this run.";
         docFallbackNote.classList.remove("hidden");
       }
-      setFooter("done", "Done · document generated");
+      setFooter("done", "Done - document generated");
       break;
     case "error":
       errorBox.textContent = `Agent pipeline error: ${payload.message}`;
       errorBox.classList.remove("hidden");
-      setFooter("error", "Failed · see error above");
+      setFooter("error", "Failed - see error above");
       break;
   }
 }

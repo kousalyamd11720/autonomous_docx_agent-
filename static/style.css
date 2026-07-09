@@ -10,9 +10,9 @@
   --panel-border: #2a2f38;
   --text: #e8e6e1;
   --text-muted: #8b9099;
-  --accent: #c98a3d;      /* brass — queued / primary actions */
-  --accent-run: #5fa8d3;  /* steel blue — running */
-  --accent-done: #6fbf73; /* green — done */
+  --accent: #c98a3d;      /* brass - queued / primary actions */
+  --accent-run: #5fa8d3;  /* steel blue - running */
+  --accent-done: #6fbf73; /* green - done */
   --accent-error: #c85c5c;
   --mono: 'IBM Plex Mono', ui-monospace, monospace;
   --serif: 'Source Serif 4', Georgia, serif;
@@ -38,7 +38,7 @@ body {
   border-bottom: 1px solid var(--panel-border);
 }
 .brand { display: flex; align-items: center; gap: 8px; }
-.brand-mark { color: var(--accent); font-size: 18px; }
+.brand-mark { color: var(--accent); font-family: var(--mono); font-size: 13px; font-weight: 600; }
 .brand-name { font-family: var(--mono); font-weight: 600; font-size: 16px; letter-spacing: 0.02em; }
 .brand-sub { font-family: var(--mono); color: var(--text-muted); font-size: 12px; }
 
@@ -145,9 +145,9 @@ body {
   font-size: 11.5px;
   color: var(--text-muted);
 }
-.console-footer.running::before { content: "● "; color: var(--accent-run); }
-.console-footer.done::before { content: "● "; color: var(--accent-done); }
-.console-footer.error::before { content: "● "; color: var(--accent-error); }
+.console-footer.running::before { content: "\25CF "; color: var(--accent-run); }
+.console-footer.done::before { content: "\25CF "; color: var(--accent-done); }
+.console-footer.error::before { content: "\25CF "; color: var(--accent-error); }
 
 /* ---------------- activity panel ---------------- */
 .empty-state { color: var(--text-muted); font-size: 13px; line-height: 1.6; }
