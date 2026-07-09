@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Agent Console — Autonomous Document Agent</title>
+<link rel="stylesheet" href="/static/style.css" />
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+</head>
+<body>
+
+<header class="topbar">
+  <div class="brand">
+    <span class="brand-mark">▣</span>
+    <span class="brand-name">Agent Console</span>
+  </div>
+  <span class="brand-sub">autonomous document agent</span>
+</header>
+
+<main class="layout">
+
+  <!-- LEFT: request console -->
+  <section class="panel console-panel">
+    <h2 class="panel-title">01 — Request</h2>
+    <p class="panel-hint">Describe what you need in plain language. The agent decides the document type, plans its own sections, and writes them.</p>
+
+    <textarea id="requestInput" class="request-input" placeholder="e.g. Write a project kickoff proposal for a new mobile banking app, including scope, timeline, and budget."></textarea>
+
+    <div class="examples">
+      <span class="examples-label">Try:</span>
+      <button class="chip" data-example="standard">Standard request</button>
+      <button class="chip" data-example="complex">Ambiguous / complex request</button>
+    </div>
+
+    <button id="runBtn" class="run-btn">
+      <span class="run-btn-label">Run agent</span>
+      <span class="run-btn-arrow">→</span>
+    </button>
+
+    <div id="consoleFooter" class="console-footer">Idle · waiting for a request</div>
+  </section>
+
+  <!-- RIGHT: live activity + document -->
+  <section class="panel activity-panel">
+    <h2 class="panel-title">02 — Agent activity</h2>
+
+    <div id="emptyState" class="empty-state">
+      <p>No task running yet.</p>
+      <p class="empty-sub">Submit a request on the left — each planned step will appear here as the agent works through it.</p>
+    </div>
+
+    <div id="docTypeRow" class="doc-type-row hidden">
+      <span class="doc-type-label">Document type</span>
+      <span id="docTypeValue" class="doc-type-value">—</span>
+    </div>
+
+    <ol id="stepLog" class="step-log"></ol>
+
+    <div id="assumptionsBox" class="assumptions-box hidden">
+      <div class="assumptions-title">Assumptions the agent made</div>
+      <ul id="assumptionsList"></ul>
+    </div>
+
+    <div id="errorBox" class="error-box hidden"></div>
+  </section>
+
+</main>
+
+<!-- DOCUMENT PREVIEW -->
+<section id="docSection" class="doc-section hidden">
+  <div class="doc-section-header">
+    <h2 class="panel-title">03 — Generated document</h2>
+    <a id="downloadBtn" class="download-btn hidden" href="#" download>
+      <span>Download .docx</span>
+      <span class="download-icon">⬇</span>
+    </a>
+  </div>
+
+  <article id="docPage" class="doc-page">
+    <h1 id="docTitle" class="doc-title">—</h1>
+    <div id="docFallbackNote" class="doc-fallback-note hidden"></div>
+    <div id="docBody" class="doc-body"></div>
+  </article>
+</section>
+
+<script src="/static/app.js"></script>
+</body>
+</html>
