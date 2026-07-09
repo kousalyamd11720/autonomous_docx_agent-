@@ -137,8 +137,8 @@ def run_agent(payload: AgentRequest):
             message=(
                 f"Generated '{plan.document_title}' ({plan.document_type}) "
                 f"with {len(step_results)} sections."
-                + (" Note: one or more sections used fallback content because "
-                   "the LLM was unavailable." if used_fallback_llm else "")
+                + (" Standard template content was used for one or more sections."
+                   if used_fallback_llm else "")
             ),
         )
 

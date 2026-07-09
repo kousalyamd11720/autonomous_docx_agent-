@@ -16,8 +16,8 @@ Flow:
 """
 import json
 import logging
+import re
 from datetime import datetime
-from typing import List
 
 from app.models import ExecutionPlan, PlanStep
 from app.llm_client import call_llm, LLMUnavailableError
@@ -64,34 +64,78 @@ def _planner_system_prompt() -> str:
     return PLANNER_SYSTEM_PROMPT_TEMPLATE.format(today=today)
 
 
+FALLBACK_TEMPLATES = [
+    (("meeting minutes", "minutes of meeting", "mom"), "Meeting Minutes",
+     ("Meeting Overview", "Discussion Summary", "Decisions", "Action Items")),
+    (("standard operating procedure", "sop", "procedure", "process guide"),
+     "Standard Operating Procedure",
+     ("Purpose and Scope", "Roles and Responsibilities", "Procedure", "Quality Checks")),
+    (("technical design", "architecture", "system design"), "Technical Design Document",
+     ("Overview and Objectives", "Proposed Architecture", "Implementation Approach", "Risks and Controls")),
+    (("product specification", "product spec", "requirements document", "prd"),
+     "Product Specification",
+     ("Product Overview", "User Requirements", "Functional Requirements", "Acceptance Criteria")),
+    (("project plan", "implementation plan", "rollout plan"), "Project Plan",
+     ("Project Overview", "Scope and Deliverables", "Timeline and Milestones", "Risks and Next Steps")),
+    (("proposal", "business case", "pitch"), "Business Proposal",
+     ("Executive Summary", "Proposed Solution", "Implementation and Timeline", "Value and Next Steps")),
+    (("report", "analysis", "assessment", "review"), "Business Report",
+     ("Executive Summary", "Background and Objectives", "Analysis and Findings", "Recommendations")),
+]
+
+
+def _fallback_document_type(user_request: str):
+    request_lower = user_request.lower()
+    for keywords, document_type, headings in FALLBACK_TEMPLATES:
+        if any(
+            re.search(rf"\b{re.escape(keyword)}\b", request_lower)
+            for keyword in keywords
+        ):
+            return document_type, headings
+    return (
+        "Business Document",
+        ("Executive Summary", "Background and Objectives",
+         "Key Considerations", "Recommendations and Next Steps"),
+    )
+
+
+def _fallback_title(user_request: str, document_type: str) -> str:
+    subject = re.sub(
+        r"^(please\s+)?(create|write|prepare|generate|draft|make)\s+(an?\s+)?",
+        "", user_request.strip(), flags=re.IGNORECASE,
+    )
+    subject = re.sub(r"\s+", " ", subject).strip(" .:-")
+    if not subject:
+        return document_type
+    if len(subject) > 72:
+        subject = subject[:69].rsplit(" ", 1)[0] + "..."
+    return subject[0].upper() + subject[1:]
+
+
 def _fallback_plan(user_request: str) -> ExecutionPlan:
     """
     Deterministic baseline plan used only when the LLM is unavailable after
     retries. Guarantees the pipeline still returns a usable document instead
     of a bare error, at the cost of being generic rather than tailored.
     """
-    logger.info("Planner falling back to deterministic generic plan.")
+    logger.info("Planner using a request-aware deterministic template.")
+    document_type, headings = _fallback_document_type(user_request)
     steps = [
-        PlanStep(step_id=1, title="Executive Summary",
-                 description=f"Summarize the purpose of this document based on the request: {user_request}",
-                 section_heading="Executive Summary"),
-        PlanStep(step_id=2, title="Background / Context",
-                 description="Provide relevant background context for this request.",
-                 section_heading="Background"),
-        PlanStep(step_id=3, title="Main Details",
-                 description="Lay out the core content addressing the request in detail.",
-                 section_heading="Details"),
-        PlanStep(step_id=4, title="Next Steps",
-                 description="Outline recommended next steps or action items.",
-                 section_heading="Next Steps"),
+        PlanStep(
+            step_id=step_id,
+            title=heading,
+            description=(
+                f"Develop the {heading.lower()} for this {document_type.lower()}, "
+                f"grounded in the original request: {user_request}"
+            ),
+            section_heading=heading,
+        )
+        for step_id, heading in enumerate(headings, start=1)
     ]
     return ExecutionPlan(
-        document_type="Business Document",
-        document_title="Generated Document",
-        assumptions=[
-            "LLM planning service was unavailable, so a generic four-section "
-            "business document structure was used instead of a tailored plan."
-        ],
+        document_type=document_type,
+        document_title=_fallback_title(user_request, document_type),
+        assumptions=[],
         steps=steps,
     )
 

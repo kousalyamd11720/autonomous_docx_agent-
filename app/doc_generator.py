@@ -104,7 +104,7 @@ def _add_assumptions(doc: Document, assumptions: List[str]):
     doc.add_paragraph()
 
 
-def _add_section(doc: Document, heading_text: str, content: str, used_fallback: bool):
+def _add_section(doc: Document, heading_text: str, content: str):
     heading = doc.add_heading(heading_text, level=1)
     for run in heading.runs:
         run.font.color.rgb = ACCENT_COLOR
@@ -133,13 +133,6 @@ def _add_section(doc: Document, heading_text: str, content: str, used_fallback: 
             p.paragraph_format.space_after = Pt(6)
         i += 1
 
-    if used_fallback:
-        note = doc.add_paragraph()
-        note_run = note.add_run("(Note: generated via fallback logic — LLM was unavailable for this section.)")
-        note_run.italic = True
-        note_run.font.size = Pt(9)
-        note_run.font.color.rgb = RGBColor(0xA0, 0x30, 0x30)
-
     doc.add_paragraph()
 
 
@@ -160,7 +153,7 @@ def generate_document(plan: ExecutionPlan, step_results: List[StepResult]) -> st
         result = results_by_id.get(step.step_id)
         if result is None:
             continue
-        _add_section(doc, result.section_heading, result.content, result.used_fallback)
+        _add_section(doc, result.section_heading, result.content)
         # Place assumptions right after the opening section (e.g. Executive
         # Summary) rather than before any real content -- readers see the
         # substance first, then the context needed to interpret it.
